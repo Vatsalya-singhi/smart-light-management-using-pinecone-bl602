@@ -27,6 +27,7 @@ aws_client.configureMQTTOperationTimeout(5)  # 5 sec
 
 
 def send_data_to_timestream(sensor_data):
+    """Function sending payload to Firebase."""
     timestream = boto3.client('timestream-write')
     # Assuming you have set up a database and table in Timestream
     database_name = 'your_database'
@@ -47,6 +48,8 @@ def send_data_to_timestream(sensor_data):
     
 # Subscribe callback
 def on_message(client, userdata, message):
+    """Function fetching payload."""
+    print(client, userdata)
     payload = message.payload.decode("utf-8")
     print(f"Received message '{payload}' on topic '{message.topic}'")
     # Send the received data to Amazon Timestream

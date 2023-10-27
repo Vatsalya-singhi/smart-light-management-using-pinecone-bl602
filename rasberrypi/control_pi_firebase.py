@@ -1,10 +1,10 @@
+import json
+from datetime import datetime
+import paho.mqtt.client as mqtt
+
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
-
-import paho.mqtt.client as mqtt
-import json
-from datetime import datetime
 
 # Set up MQTT client
 mqtt_client = mqtt.Client()
@@ -21,6 +21,7 @@ firebase_admin.initialize_app(cred, {
 ref = db.reference('/')
 
 def send_data_to_firebase(sensor_data):
+    """Function sending payload to Firebase."""
     # Data to send to Firebase
     payload = {
         'MeasureName': 'sensor_data',
@@ -33,9 +34,11 @@ def send_data_to_firebase(sensor_data):
         print("Data pushed to Firebase with key:", new_data_ref.key)
     except Exception as e:
         print("An error occurred:", str(e))
-    
+
 # Subscribe callback
 def on_message(client, userdata, message):
+    """Function fetching payload."""
+    print(client, userdata)
     payload = message.payload.decode("utf-8")
     print(f"Received message '{payload}' on topic '{message.topic}'")
     # Send the received data to Firebase

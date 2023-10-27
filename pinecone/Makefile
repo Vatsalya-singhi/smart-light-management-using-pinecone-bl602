@@ -1,32 +1,51 @@
-# Makefile for Pinecone BL602 Hello World
+#
+# This is a project Makefile. It is assumed the directory this Makefile resides in is a
+# project subdirectory.
+#
 
-PROJECT_NAME := hello_world
+PROJECT_NAME := pinecone
+PROJECT_PATH := $(abspath .)
+PROJECT_BOARD := evb
+export PROJECT_PATH PROJECT_BOARD
+#CONFIG_TOOLPREFIX :=
 
-# BL602 SDK directory
-BL602_SDK_DIR := /path/to/your/bl602_sdk
 
-# BL602 build tools
-BL60X_TOOLCHAIN_PATH := $(BL602_SDK_DIR)/toolchain/install
+ifeq ($(origin BL60X_SDK_PATH), undefined)
+BL60X_SDK_PATH_GUESS ?= $(shell pwd)
+BL60X_SDK_PATH ?= $(BL60X_SDK_PATH_GUESS)/../..
+$(info ****** Please SET BL60X_SDK_PATH ******)
+$(info ****** Trying SDK PATH [$(BL60X_SDK_PATH)])
+endif
 
-# Compile flags
-CFLAGS := -I$(BL602_SDK_DIR)/components/cmsis/include -I$(BL602_SDK_DIR)/components/hal/include -I$(BL602_SDK_DIR)/components/newlib/newlib/libc/include -I$(BL602_SDK_DIR)/components/ble_stack/include -std=c99
+-include ./proj_config.mk
 
-# Source files
-SRCS := hello.c
+# Add Paho MQTT library source files to the list of sources
+#PAHO_MQTT_SOURCES := $(shell find ./pinecone/mqtt -name '*.c')
 
-OBJS := $(SRCS:.c=.o)
+#SOURCES += $(PAHO_MQTT_SOURCES)
 
-.PHONY: all clean
+# Path to the Paho MQTT library (adjust as needed)
+#PAHO_MQTT_PATH := ./pinecone/mqtt
 
-all: $(PROJECT_NAME).bin
+# Include the Paho MQTT library header files
+#INCLUDES += -I$(PAHO_MQTT_PATH)
 
-$(PROJECT_NAME).bin: $(OBJS)
-    $(BL60X_TOOLCHAIN_PATH)/bin/riscv64-unknown-elf-gcc -o $@ $^ -Wl,-T$(BL602_SDK_DIR)/project/brs/bsp/linker_blsp_5320.lds -nostartfiles -Wl,--gc-sections -Wl,-Map=$(PROJECT_NAME).map -march=rv32imac -mabi=ilp32
+# NimBLE Porting Layer needed for mulitasking functions
+COMPONENTS_NPL     := nimble-porting-layer
+#COMPONENTS_NETWORK := sntp dns_server
+COMPONENTS_BLSYS   := bltime blfdt blmtd bloop loopadc looprt loopset # blota loopalarm
+COMPONENTS_VFS     := romfs # atcmd cjson
+#COMPONENTS_BLE     := blecontroller blestack blemesh
 
-clean:
-    rm -f $(OBJS) $(PROJECT_NAME).bin $(PROJECT_NAME).map
 
-%.o: %.c
-    $(BL60X_TOOLCHAIN_PATH)/bin/riscv64-unknown-elf-gcc $(CFLAGS) -c $< -o $@
 
-.PHONY: clean
+INCLUDE_COMPONENTS += freertos_riscv_ram bl602 bl602_std hal_drv vfs yloop utils cli blog blog_testc
+INCLUDE_COMPONENTS += easyflash4 # lwip_altcp_tls_mbedtls
+#INCLUDE_COMPONENTS += bl602_wifi bl602_wifidrv lwip lwip_dhcpd mbedtls aws-iot httpc netutils blsync_ble cjson audio_device audio_framework
+INCLUDE_COMPONENTS += $(COMPONENTS_NETWORK)
+INCLUDE_COMPONENTS += $(COMPONENTS_BLSYS)
+INCLUDE_COMPONENTS += $(COMPONENTS_VFS)
+INCLUDE_COMPONENTS += $(COMPONENTS_NPL)
+INCLUDE_COMPONENTS += $(PROJECT_NAME)
+
+include $(BL60X_SDK_PATH)/make_scripts_riscv/project.mk
