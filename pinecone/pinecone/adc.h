@@ -6,8 +6,6 @@
 #include <bl602_adc.h>  // For BL602 ADC Standard Driver
 #include <bl_adc.h>     // For BL602 ADC Hardware Abstraction Layer
 #include <bl_dma.h>     // For BL602 DMA Hardware Abstraction Layer
-#include <FreeRTOS.h>  // For FreeRTOS
-#include <task.h>      // For vTaskDelay
 
 #define ADC_GPIO 11
 #define ADC_FREQUENCY 10000

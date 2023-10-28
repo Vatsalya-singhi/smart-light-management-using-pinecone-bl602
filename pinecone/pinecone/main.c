@@ -57,24 +57,42 @@
 #include <looprt.h>
 #include <loopset.h>
 #include <adc.h>
+// #include <adc1.h>
 
 void user_vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
     /*empty*/
 }
 
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+    /*empty*/
+}
+
 void user_vApplicationMallocFailedHook(void)
 {
-    printf("Memory Allocate Failed. Current left size is %d bytes\r\n",
-           xPortGetFreeHeapSize());
-    while (1)
-    {
-        /*empty here*/
-    }
+    printf("Malloc failed! Handle the situation here.\n");
+    // printf("Memory Allocate Failed. Current left size is %d bytes\r\n",
+    //        xPortGetFreeHeapSize());
+    /*empty*/
+}
+
+void vApplicationMallocFailedHook(void)
+{
+    printf("Malloc failed! Handle the situation here.\n");
+    // printf("Memory Allocate Failed. Current left size is %d bytes\r\n",
+    //        xPortGetFreeHeapSize());
     /*empty*/
 }
 
 void user_vApplicationIdleHook(void)
+{
+    __asm volatile(
+        "   wfi     ");
+    /*empty*/
+}
+
+void vApplicationIdleHook(void)
 {
     __asm volatile(
         "   wfi     ");
@@ -137,6 +155,36 @@ void vAssertCalled(void)
     }
 }
 
+static void system_init(void)
+{
+    blog_init();
+    bl_irq_init();
+    bl_sec_init();
+    bl_sec_test();
+    bl_dma_init();
+    hal_boot2_init();
+    /* board config is set after system is init*/
+    hal_board_cfg(0);
+}
+
+static void system_thread_init()
+{
+    /*nothing here*/
+}
+
+// Custom delay function to approximate a 10-second delay
+void custom_delay()
+{
+    for (volatile int i = 0; i < 5000000; ++i)
+    {
+        for (volatile int j = 0; j < 2; ++j)
+        {
+            // This loop simulates a delay by executing instructions
+            // Adjust the loop count based on the system speed to approximate the delay
+        }
+    }
+}
+
 void bfl_main(void)
 {
     /*
@@ -144,13 +192,24 @@ void bfl_main(void)
      * and baudrate of 2M
      */
     bl_uart_init(0, 16, 7, 255, 255, 2 * 1000 * 1000);
+    // adc light sensor setup
+    // system_init();
+    // system_thread_init();
+    // init_adc();
 
-    // temperature sensor
-    float temperature = read_tsen2();
-    printf("Returned Temperature = %f Celsius\r\n", temperature);
+    while (1)
+    {
+        // temperature sensor
+        float temperature = read_tsen2();
+        printf("Returned Temperature = %f Celsius\r\n", temperature);
 
-    // adc light sensor
-    init_adc();
-    uint32_t adc = read_adc();
-    printf("Average value of the ADC Samples = %lu\r\n", adc);
+        // adc light sensor
+        // read_adc();
+        // uint32_t adcValue = read_adc();
+        // printf("Average value of the ADC Samples = %lu\r\n", adcValue);
+
+        // Use the custom delay function for a 10-second pause
+        custom_delay();
+    }
 }
+
