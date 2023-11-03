@@ -2,11 +2,12 @@ const mqtt = require('mqtt');
 require('dotenv').config();
 
 // MQTT broker
-const broker = process.env.MQTT_BROKER;
-const topic = process.env.MQTT_TOPIC;
+const mqtt_broker = process.env.MQTT_BROKER;
+const mqtt_topic = process.env.MQTT_TOPIC;
+const mqtt_pub_interval = process.env.MQTT_PUB_INTERVAL;
 
 // Create a client instance
-const client = mqtt.connect(broker);
+const client = mqtt.connect(mqtt_broker);
 
 // Data to be published
 const data = {
@@ -29,7 +30,7 @@ const data = {
 // Function to publish data
 const publishData = () => {
     const jsonMessage = JSON.stringify(data);
-    client.publish(topic, jsonMessage, (err) => {
+    client.publish(mqtt_topic, jsonMessage, (err) => {
         if (err) {
             console.error('Error occurred:', err);
         } else {
@@ -41,9 +42,8 @@ const publishData = () => {
 // When the client is connected
 client.on('connect', () => {
     console.log('Connected to MQTT broker');
-    // Publish data every 10 seconds
-    const timer = process.env.MQTT_PUB_INTERVAL ?? 10000;
-    setInterval(publishData, timer);
+    // Publish data every set interval
+    setInterval(publishData, mqtt_pub_interval);
 });
 
 // Handle errors

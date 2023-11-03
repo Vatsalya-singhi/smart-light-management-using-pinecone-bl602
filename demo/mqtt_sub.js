@@ -3,19 +3,20 @@ const { produceKafkaMessage } = require('./kafka_pub'); // Importing the produce
 require('dotenv').config();
 
 // MQTT broker
-const broker = process.env.MQTT_BROKER;
-const topic = process.env.MQTT_TOPIC;
+const mqtt_broker = process.env.MQTT_BROKER;
+const mqtt_topic = process.env.MQTT_TOPIC;
+const kafka_topic = process.env.KAFKA_TOPIC;
 
 // Create a client instance
-const client = mqtt.connect(broker);
+const client = mqtt.connect(mqtt_broker);
 
 // When the client is connected
 client.on('connect', () => {
     console.log('Connected to MQTT broker');
     // Subscribe to the specified topic
-    client.subscribe(topic, (err) => {
+    client.subscribe(mqtt_topic, (err) => {
         if (!err) {
-            console.log('Subscribed to', topic);
+            console.log('Subscribed to', mqtt_topic);
         } else {
             console.error('Subscription error:', err);
         }
@@ -29,7 +30,7 @@ client.on('message', (receivedTopic, message) => {
 
 
     // Call Kafka's produceMessage function with received MQTT message
-    produceKafkaMessage(process.env.KAFKA_TOPIC, message.toString())
+    produceKafkaMessage(kafka_topic, message.toString())
         .then(() => {
             console.log('Message published to Kafka');
         })

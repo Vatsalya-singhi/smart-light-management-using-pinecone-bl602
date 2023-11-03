@@ -1,10 +1,13 @@
 const { Kafka, Partitioners } = require('kafkajs');
 require('dotenv').config();
 
+const kafka_pub_client_id = process.env.KAFKA_PUB_CLIENT_ID;
+const kafka_broker = process.env.KAFKA_BROKER;
+
 // Kafka broker
 const kafka = new Kafka({
-    clientId: process.env.KAFKA_PUB_CLIENT_ID,
-    brokers: ['172.18.240.1:9092'] // Replace with your Kafka broker address
+    clientId: kafka_pub_client_id,
+    brokers: [kafka_broker] // Replace with your Kafka broker address
 });
 
 // Create a producer

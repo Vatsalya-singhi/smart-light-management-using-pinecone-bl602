@@ -1,17 +1,21 @@
 const { Kafka } = require('kafkajs');
 require('dotenv').config();
 
+const kafka_sub_client_id = process.env.KAFKA_SUB_CLIENT_ID;
+const kafka_broker = process.env.KAFKA_BROKER;
+const kafka_topic = process.env.KAFKA_TOPIC;
+
 // Kafka broker
 const kafka = new Kafka({
-    clientId: process.env.KAFKA_SUB_CLIENT_ID,
-    brokers: ['172.18.240.1:9092'] // Replace with your Kafka broker address
+    clientId: kafka_sub_client_id,
+    brokers: [kafka_broker] // Replace with your Kafka broker address
 });
 
 async function init() {
     const consumer = kafka.consumer({ groupId: 'test-group' })
     await consumer.connect()
 
-    await consumer.subscribe({ topic: process.env.KAFKA_TOPIC, fromBeginning: true })
+    await consumer.subscribe({ topic: kafka_topic, fromBeginning: true })
 
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
