@@ -1,17 +1,29 @@
 const mqtt = require('mqtt');
+require('dotenv').config();
 
 // MQTT broker
-const broker = 'mqtt://test.mosquitto.org:1883';
-const topic = 'bcefece7-4451-409d-93b9-5f07892e805f'; // Change 'your/topic' to the desired topic
+const broker = process.env.MQTT_BROKER;
+const topic = process.env.MQTT_TOPIC;
 
 // Create a client instance
 const client = mqtt.connect(broker);
 
 // Data to be published
 const data = {
-    message: 'Hello, MQTT!',
+    message: 'Hello world!',
     value: new Date().toLocaleTimeString(),
-    // Add more fields as needed
+    payload: {
+        "place_id": "living_room",
+        "device_id": 12233,
+        "light_status": "true",
+        "light_brightness": 0.2,
+        "timestamp": "timestamp",
+        "sensor": {
+            "temprature": 1,
+            "PIR": "PIR_VALUE",
+            "Light_sensor": 3
+        }
+    }
 };
 
 // Function to publish data
@@ -30,7 +42,8 @@ const publishData = () => {
 client.on('connect', () => {
     console.log('Connected to MQTT broker');
     // Publish data every 10 seconds
-    setInterval(publishData, 10000);
+    const timer = process.env.MQTT_PUB_INTERVAL ?? 10000;
+    setInterval(publishData, timer);
 });
 
 // Handle errors
