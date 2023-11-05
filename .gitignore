@@ -38,3 +38,7 @@ public
 /platforms
 /plugins
 /www
+
+/.env
+.env
+*.env

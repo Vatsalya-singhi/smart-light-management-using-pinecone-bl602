@@ -1,4 +1,5 @@
 const { Kafka } = require('kafkajs');
+const { insertOne } = require('./mongodb_client');
 require('dotenv').config();
 
 const kafka_sub_client_id = process.env.KAFKA_SUB_CLIENT_ID;
@@ -20,6 +21,14 @@ async function init() {
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
             console.log(`[${topic}]: PART:${partition}:`, message.value.toString());
+
+            // save data on mongodb collection
+            try {
+                const payload = JSON.parse(message.value.toString());
+                await insertOne(payload);
+            } catch (err) {
+                console.log('parse error');
+            }
         },
     })
 
