@@ -23,7 +23,7 @@ const getRandomNumber = (min, max, floorFlag = true) => {
 
 // Data to be published
 const fetch_payload = () => {
-    const device_id = getRandomNumber(1, 3, true);
+    const device_id = getRandomNumber(1, 4, true);
     const placeList = ["Kitchen", "Living Room", "Bed Room"];
     const date = new Date();
     return {
