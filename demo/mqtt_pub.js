@@ -22,29 +22,32 @@ const getRandomNumber = (min, max, floorFlag = true) => {
 }
 
 // Data to be published
-const payload = {
-    "device_id": device_id,
-    "device_name": device_name,
-    "place_id": place_id,
-    "date": new Date().toDateString(),
-    "timestamp": new Date().getTime(),
-    "payload": {
-        "temperature_sensor_reading": getRandomNumber(-10, 30, true),
-        "led_status_reading": getRandomNumber(-10, 10, true) > 0 ? true : false,
-        "luminosity_reading": getRandomNumber(0, 1, false).toFixed(2),
-        "proximity_sensor_reading": getRandomNumber(25, 2000, true),
-        "light_sensor_reading": getRandomNumber(0, 1023, true),
+const fetch_payload = () => {
+    return {
+        "device_id": device_id,
+        "device_name": device_name,
+        "place_id": place_id,
+        "date": new Date().toDateString(),
+        "timestamp": new Date().getTime(),
+        "payload": {
+            "temperature_sensor_reading": getRandomNumber(-10, 30, true),
+            "led_status_reading": getRandomNumber(-10, 10, true) > 0 ? true : false,
+            "luminosity_reading": getRandomNumber(0, 1, false).toFixed(2),
+            "proximity_sensor_reading": getRandomNumber(25, 2000, true),
+            "light_sensor_reading": getRandomNumber(0, 1023, true),
+        }
     }
 }
 
 // Function to publish data
 const publishData = async () => {
+    const payload = fetch_payload();
     const jsonMessage = JSON.stringify(payload);
     client.publish(mqtt_topic, jsonMessage, (err) => {
         if (err) {
             console.error('Error occurred:', err);
         } else {
-            // console.log('Published:', jsonMessage);
+            console.log('Published:', jsonMessage);
         }
     });
 }
