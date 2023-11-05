@@ -6,9 +6,9 @@ const mqtt_broker = process.env.MQTT_BROKER;
 const mqtt_topic = process.env.MQTT_TOPIC;
 const mqtt_pub_interval = process.env.MQTT_PUB_INTERVAL;
 // device specific details
-const device_name = process.env.DEVICE_NAME;
-const device_id = process.env.DEVICE_ID;
-const place_id = process.env.PLACE_ID;
+// const device_name = process.env.DEVICE_NAME;
+// const device_id = process.env.DEVICE_ID;
+// const place_id = process.env.PLACE_ID;
 
 // Create a client instance
 const client = mqtt.connect(mqtt_broker);
@@ -23,12 +23,15 @@ const getRandomNumber = (min, max, floorFlag = true) => {
 
 // Data to be published
 const fetch_payload = () => {
+    const device_id = getRandomNumber(1, 3, true);
+    const placeList = ["Kitchen", "Living Room", "Bed Room"];
+    const date = new Date();
     return {
         "device_id": device_id,
-        "device_name": device_name,
-        "place_id": place_id,
-        "date": new Date().toDateString(),
-        "timestamp": new Date().getTime(),
+        "device_name": `iot_sensor_${device_id}`,
+        "place_id": placeList[device_id - 1],
+        "date": date.toDateString(),
+        "timestamp": date.getTime(),
         "payload": {
             "temperature_sensor_reading": getRandomNumber(-10, 30, true),
             "led_status_reading": getRandomNumber(-10, 10, true) > 0 ? true : false,
