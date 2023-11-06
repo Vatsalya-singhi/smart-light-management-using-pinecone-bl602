@@ -42,49 +42,87 @@ async function save_iot_frame_dumps(docList) {
     }
 }
 
-// device_id: any;
-// device_name: string;
-// place_id: string;
-// date: string;
-// timestamp: number;
-// payload: {
-//     temperature_sensor_reading: any;
-//     led_status_reading: boolean;
-//     luminosity_reading: any;
-//     proximity_sensor_reading: any;
-//     light_sensor_reading: any;
-// };
-
-async function save_temperature_time_series(docList) {
-
-    const payload = _.map(docList, (obj) => {
-        return {
-            "metadata": { "sensorName": obj.device_name, "type": "temperature" },
-            "timestamp": obj.date,
-            "temp": obj.payload.temperature_sensor_reading,
-        }
-    });
-
+async function save_time_series(payload, collection) {
     try {
         // Connect to the database
         const db = client.db(mongodb_database);
         // insert doc into collection
-        const result = await db.collection(mongodb_collection_temperature).insertMany(payload);
+        const result = await db.collection(collection).insertMany(payload);
         // Print result
-        console.log(`${result.insertedCount} documents were inserted into ${mongodb_collection_temperature} collection`);
+        console.log(`${result.insertedCount} documents were inserted into ${collection} collection`);
     } finally {
         // Close the MongoDB client connection
         // await client.close(true);
     }
-
 }
 
-async function processIOTFrames(docList) {
-    
-    _.forEach(docList, (doc) => doc.date = new Date(doc.date));
+async function save_temperature_time_series(docList) {
+    const payload = _.map(docList, (obj) => {
+        return {
+            "metadata": { "sensorName": obj.device_name, "type": "temperature" },
+            "timestamp": obj.date,
+            "temperature": obj.payload.temperature_sensor_reading,
+        }
+    });
+    save_time_series(payload, mongodb_collection_temperature);
+}
 
+async function save_led_status_time_series(docList) {
+    const payload = _.map(docList, (obj) => {
+        return {
+            "metadata": { "sensorName": obj.device_name, "type": "led_status" },
+            "timestamp": obj.date,
+            "led_status": obj.payload.led_status_reading,
+        }
+    });
+    save_time_series(payload, mongodb_collection_led_status);
+}
+
+async function save_luminosity_time_series(docList) {
+    const payload = _.map(docList, (obj) => {
+        return {
+            "metadata": { "sensorName": obj.device_name, "type": "luminosity" },
+            "timestamp": obj.date,
+            "luminosity": obj.payload.luminosity_reading,
+        }
+    });
+    save_time_series(payload, mongodb_collection_luminosity);
+}
+
+async function save_proximity_time_series(docList) {
+    const payload = _.map(docList, (obj) => {
+        return {
+            "metadata": { "sensorName": obj.device_name, "type": "proximity" },
+            "timestamp": obj.date,
+            "proximity": obj.payload.proximity_sensor_reading,
+        }
+    });
+    save_time_series(payload, mongodb_collection_proximity);
+}
+
+async function save_ldr_time_series(docList) {
+    const payload = _.map(docList, (obj) => {
+        return {
+            "metadata": { "sensorName": obj.device_name, "type": "ldr" },
+            "timestamp": obj.date,
+            "ldr": obj.payload.light_sensor_reading,
+        }
+    });
+    save_time_series(payload, mongodb_collection_ldr);
+}
+
+
+async function processIOTFrames(docList) {
+    // preprocessing
+    _.forEach(docList, (doc) => doc.date = new Date(doc.date));
+    // save iot_dumps
     await save_iot_frame_dumps(docList);
+    // save timeseries
     await save_temperature_time_series(docList);
+    await save_led_status_time_series(docList);
+    await save_luminosity_time_series(docList);
+    await save_proximity_time_series(docList);
+    await save_ldr_time_series(docList);
 }
 
 module.exports = {
@@ -93,16 +131,20 @@ module.exports = {
 
 async function run() {
     const db = client.db(mongodb_database);
-    const result = await db.createCollection(mongodb_collection_temperature, {
-        timeseries: {
-            timeField: "timestamp",
-            metaField: "metadata",
-            granularity: "seconds",
-            // expireAfterSeconds: "86400", // 1 day
-        }
-    });
 
-    console.log('collection created');
+    let collection_arr = [mongodb_collection_temperature, mongodb_collection_led_status, mongodb_collection_luminosity, mongodb_collection_proximity, mongodb_collection_ldr];
+
+    for (let value of collection_arr) {
+        const result = await db.createCollection(value, {
+            timeseries: {
+                timeField: "timestamp",
+                metaField: "metadata",
+                granularity: "seconds",
+                // expireAfterSeconds: "86400", // 1 day
+            }
+        });
+        console.log(`${value} collections created`);
+    }
 }
 
 // run().catch((err) => console.log(err));
