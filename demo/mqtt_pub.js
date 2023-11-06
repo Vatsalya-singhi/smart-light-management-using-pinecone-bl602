@@ -30,8 +30,8 @@ const fetch_payload = () => {
         "device_id": device_id,
         "device_name": `iot_sensor_${device_id}`,
         "place_id": placeList[device_id - 1],
-        "date": date.toISOString(),
-        "timestamp": date.getTime(),
+        "date": date.toISOString(), // 2023-11-06T19:47:42.440Z
+        "timestamp": date.getTime(), // number in ns
         "payload": {
             "temperature_sensor_reading": getRandomNumber(-10, 30, true),
             "led_status_reading": getRandomNumber(-10, 10, true) > 0 ? true : false,
