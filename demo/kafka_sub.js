@@ -1,5 +1,5 @@
 const { Kafka, logLevel } = require('kafkajs');
-const { insertOne, insertMany } = require('./mongodb_client');
+const { processIOTFrames } = require('./mongodb_client');
 require('dotenv').config();
 var _ = require('lodash');
 
@@ -50,7 +50,7 @@ async function init() {
             console.log("batch size=>", batch.messages.length);
             try {
                 const docList = _.map(batch.messages, (message) => JSON.parse(message.value.toString()));
-                await insertMany(docList);
+                await processIOTFrames(docList);
             } catch (err) {
                 console.log('parse error', err);
             }

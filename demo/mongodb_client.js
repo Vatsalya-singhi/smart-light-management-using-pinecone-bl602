@@ -1,12 +1,17 @@
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
+var _ = require('lodash');
 
 const mongodb_username = process.env.MONGODB_USERNAME;
 const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_database = process.env.MONGODB_DATABASE;
-const mongodb_collection_1 = process.env.MONGODB_COLLECTION_1;
-// const mongodb_collection_iot_frames = process.env.MONGODB_COLLECTION_IOT_FRAMES;
+const mongodb_collection_iot_frames = process.env.MONGODB_COLLECTION_IOT_FRAMES;
+const mongodb_collection_temperature = process.env.MONGODB_COLLECTION_TEMPERATURE;
+const mongodb_collection_led_status = process.env.MONGODB_COLLECTION_LED_STATUS;
+const mongodb_collection_luminosity = process.env.MONGODB_COLLECTION_LUMINOSITY;
+const mongodb_collection_proximity = process.env.MONGODB_COLLECTION_PROXIMITY;
+const mongodb_collection_ldr = process.env.MONGODB_COLLECTION_LDR;
 
 
 const uri = `mongodb+srv://${mongodb_username}:${mongodb_password}@cluster0.gjddfqy.mongodb.net/?retryWrites=true&w=majority`;
@@ -21,27 +26,14 @@ const client = new MongoClient(uri, {
 });
 
 
-async function insertOne(doc) {
+async function save_iot_frame_dumps(docList) {
     try {
         // Connect to the database
         const db = client.db(mongodb_database);
         // insert doc into collection
-        const result = await db.collection(mongodb_collection_1).insertOne({ ...doc });
-        // Print the ID of the inserted document
-        console.log(`A document was inserted with the _id: ${result.insertedId}`);
-    } finally {
-        // Close the MongoDB client connection
-        // await client.close(true);
-    }
-}
-
-async function insertMany(docList) {
-    try {
-        // Connect to the database
-        const db = client.db(mongodb_database);
-        // insert doc into collection
-        // best practice for max throughput
-        const result = await db.collection(mongodb_collection_1).insertMany(docList, { ordered: false }); 
+        const result = await db.collection(mongodb_collection_iot_frames).insertMany(docList, {
+            ordered: false, // best practice for max throughput
+        });
         // Print result
         console.log(`${result.insertedCount} documents were inserted`);
     } finally {
@@ -50,9 +42,13 @@ async function insertMany(docList) {
     }
 }
 
+
+async function processIOTFrames(docList) {
+    await save_iot_frame_dumps(docList);
+}
+
 module.exports = {
-    insertOne,
-    insertMany,
+    processIOTFrames,
 };
 
 async function run() {
