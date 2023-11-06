@@ -26,8 +26,7 @@ client.on('connect', () => {
 // When a message is received
 client.on('message', (receivedTopic, message) => {
     console.log('Received message on topic:', receivedTopic.toString());
-    console.log('Message:', message.toString());
-
+    // console.log('Message:', message.toString());
 
     // Call Kafka's produceMessage function with received MQTT message
     produceKafkaMessage(kafka_topic, message.toString())
