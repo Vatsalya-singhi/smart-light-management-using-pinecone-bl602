@@ -1,7 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import temp_router from "./routes/temperature";
 import proximity_router from "./routes/proximity";
 import luminosity_router from "./routes/luminosity";
@@ -17,8 +16,6 @@ const port = process.env.PORT || 3000;
 
 const app = express();
 
-app.use(bodyParser.urlencoded());
-app.use(bodyParser.json());
 app.use(express.json());
 app.use(cors({ origin: allowedOrigins }));
 
@@ -37,4 +34,5 @@ app.listen(port, () => {
 
 app.get('/', (req, res) => {
     res.send('Express + TypeScript Server');
+    // res.redirect("/iot_dumps");
 });

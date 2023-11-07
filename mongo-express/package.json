@@ -4,10 +4,11 @@
   "description": "Express application to make REST API calls to MongoDB",
   "main": "dist/index",
   "typings": "dist/index",
+  "type": "module",
   "scripts": {
     "build": "npx tsc",
-    "start": "npm run build && node dist/index.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\""
+    "start": "npm run build && node --es-module-specifier-resolution=node dist/index.js",
+    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q --es-module-specifier-resolution=node dist/index.js\""
   },
   "keywords": [],
   "author": "Vatsalya Singhi",
