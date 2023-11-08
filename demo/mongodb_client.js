@@ -59,7 +59,7 @@ async function save_time_series(payload, collection) {
 async function save_temperature_time_series(docList) {
     const payload = _.map(docList, (obj) => {
         return {
-            "metadata": { "sensorName": obj.device_name, "type": "temperature" },
+            "metadata": { "sensorName": obj.device_name, "place_id": obj.place_id, "type": "temperature" },
             "timestamp": obj.date,
             "temperature": obj.payload.temperature_sensor_reading,
         }
@@ -70,7 +70,7 @@ async function save_temperature_time_series(docList) {
 async function save_led_status_time_series(docList) {
     const payload = _.map(docList, (obj) => {
         return {
-            "metadata": { "sensorName": obj.device_name, "type": "led_status" },
+            "metadata": { "sensorName": obj.device_name, "place_id": obj.place_id, "type": "led_status" },
             "timestamp": obj.date,
             "led_status": obj.payload.led_status_reading,
         }
@@ -81,7 +81,7 @@ async function save_led_status_time_series(docList) {
 async function save_luminosity_time_series(docList) {
     const payload = _.map(docList, (obj) => {
         return {
-            "metadata": { "sensorName": obj.device_name, "type": "luminosity" },
+            "metadata": { "sensorName": obj.device_name, "place_id": obj.place_id, "type": "luminosity" },
             "timestamp": obj.date,
             "luminosity": obj.payload.luminosity_reading,
         }
@@ -92,7 +92,7 @@ async function save_luminosity_time_series(docList) {
 async function save_proximity_time_series(docList) {
     const payload = _.map(docList, (obj) => {
         return {
-            "metadata": { "sensorName": obj.device_name, "type": "proximity" },
+            "metadata": { "sensorName": obj.device_name, "place_id": obj.place_id, "type": "proximity" },
             "timestamp": obj.date,
             "proximity": obj.payload.proximity_sensor_reading,
         }
@@ -103,7 +103,7 @@ async function save_proximity_time_series(docList) {
 async function save_ldr_time_series(docList) {
     const payload = _.map(docList, (obj) => {
         return {
-            "metadata": { "sensorName": obj.device_name, "type": "ldr" },
+            "metadata": { "sensorName": obj.device_name, "place_id": obj.place_id, "type": "ldr" },
             "timestamp": obj.date,
             "ldr": obj.payload.light_sensor_reading,
         }

@@ -35,7 +35,7 @@ const fetch_payload = () => {
         "payload": {
             "temperature_sensor_reading": getRandomNumber(-10, 30, true),
             "led_status_reading": getRandomNumber(-10, 10, true) > 0 ? true : false,
-            "luminosity_reading": getRandomNumber(0, 1, false).toFixed(2),
+            "luminosity_reading": Number(getRandomNumber(0, 1, false).toFixed(2)),
             "proximity_sensor_reading": getRandomNumber(25, 2000, true),
             "light_sensor_reading": getRandomNumber(0, 1023, true),
         }
