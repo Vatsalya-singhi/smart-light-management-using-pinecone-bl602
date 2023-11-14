@@ -20,9 +20,14 @@ router.get("/", async (req, res) => {
 });
 
 // GET /aggregate_by_sensor
+// GET /aggregate_by_sensor?device_name=iot_sensor_3
 // GET /aggregate_by_sensor?minutes=10
+// GET /aggregate_by_sensor?device_name=iot_sensor_3&minutes=10
 router.get("/aggregate_by_sensor", async (req, res) => {
     const minutes = req?.query?.minutes ? Number(req.query.minutes) : 10;
+    const sensorName = req?.query?.device_name ?? null;
+    const match_aggregator = sensorName ? { $match: { 'metadata.sensorName': sensorName } } : { $match: { "metadata.sensorName": { "$exists": true } } };
+
     const interval = minutes * 60 * 1000;
 
     let results = await db.collection(collection).aggregate([
@@ -33,6 +38,7 @@ router.get("/aggregate_by_sensor", async (req, res) => {
                 metadata: 1
             }
         },
+        match_aggregator,
         {
             $group: {
                 _id: {
@@ -92,9 +98,14 @@ router.get("/aggregate_by_sensor", async (req, res) => {
 })
 
 // GET /aggregate_by_place
+// GET /aggregate_by_place?device_name=iot_sensor_3
 // GET /aggregate_by_place?minutes=10
+// GET /aggregate_by_place?device_name=iot_sensor_3&minutes=10
 router.get("/aggregate_by_place", async (req, res) => {
     const minutes = req?.query?.minutes ? Number(req.query.minutes) : 10;
+    const sensorName = req?.query?.device_name ?? null;
+    const match_aggregator = sensorName ? { $match: { 'metadata.sensorName': sensorName } } : { $match: { "metadata.sensorName": { "$exists": true } } };
+
     const interval = minutes * 60 * 1000;
 
     let results = await db.collection(collection).aggregate([
@@ -105,6 +116,7 @@ router.get("/aggregate_by_place", async (req, res) => {
                 metadata: 1
             }
         },
+        match_aggregator,
         {
             $group: {
                 _id: {
