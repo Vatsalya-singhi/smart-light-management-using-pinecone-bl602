@@ -19,6 +19,28 @@ router.get("/", async (req, res) => {
     res.send(JSON.stringify(results, null, 4)).status(200);
 });
 
+// GET /device_name_list
+router.get("/device_name_list", async (req, res) => {
+    let results = await db.collection(collection).aggregate([
+        { $group: { _id: null, list_of_device_name: { $addToSet: "$device_name" } } },
+        { $project: { _id: 0 } }
+    ])
+        .toArray();
+    res.header("Content-Type", 'application/json');
+    res.send(JSON.stringify(results, null, 4)).status(200);
+})
+
+// GET /place_id_list
+router.get("/place_id_list", async (req, res) => {
+    let results = await db.collection(collection).aggregate([
+        { $group: { _id: null, list_of_place_id: { $addToSet: "$place_id" } } },
+        { $project: { _id: 0 } },
+    ])
+        .toArray();
+    res.header("Content-Type", 'application/json');
+    res.send(JSON.stringify(results, null, 4)).status(200);
+})
+
 // GET /aggregate_by_sensor
 // GET /aggregate_by_sensor?device_name=iot_sensor_3
 // GET /aggregate_by_sensor?minutes=10
