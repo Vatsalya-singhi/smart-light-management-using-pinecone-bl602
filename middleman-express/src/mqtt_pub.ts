@@ -42,14 +42,6 @@ export class MQTTPublisher {
      * HELPER FUNCTIONS
      */
 
-    public getRandomNumber(min: number, max: number, floorFlag: boolean = true) {
-        if (floorFlag) {
-            return Math.floor(Math.random() * (max - min) + min);
-        } else {
-            return Math.random() * (max - min) + min;
-        }
-    }
-
     // Data to be published
     public fetch_payload() {
         const device_id = this.getRandomNumber(1, 4, true);
@@ -71,6 +63,14 @@ export class MQTTPublisher {
         }
     }
 
+    public getRandomNumber(min: number, max: number, floorFlag: boolean = true) {
+        if (floorFlag) {
+            return Math.floor(Math.random() * (max - min) + min);
+        } else {
+            return Math.random() * (max - min) + min;
+        }
+    }
+
     public logger() {
         // When the client is connected
         this.client.on('connect', () => {
@@ -87,5 +87,9 @@ export class MQTTPublisher {
         // do some stuff here
         this.client.end();
         console.log('Disconnected from MQTT broker');
+    }
+
+    public isconnected() {
+        return this.client.connected;
     }
 }
