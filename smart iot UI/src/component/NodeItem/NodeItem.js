@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Button from "@mui/material/Button";
 import Switch from "@mui/material/Switch";
 import { styled } from "@mui/material/styles";
@@ -9,6 +9,15 @@ import LightIcon from "@mui/icons-material/Light";
 import TungstenIcon from "@mui/icons-material/Tungsten";
 import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import Chip from "@mui/material/Chip";
+
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+
+import mqtt from 'mqtt';
+
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -84,14 +93,53 @@ const CustomThumb = () => (
     </svg>
 );
 
+// enum LED_STATUS { ON, OFF, AUTO, }
+// ON = 0
+// OFF = 1
+// AUTO = 2
+
+
 function NodeItem() {
+
+    const [ledStatus, setLedStatus] = useState(2);
+
+    const client = mqtt.connect('mqtt://test.mosquitto.org:1883');
+    client.on('connect', () => {
+        console.log('Connected to MQTT broker');
+    });
+    client.on('error', (error) => {
+        console.error('MQTT connection error:', error);
+    });
+    client.on('message', (topic, message) => {
+        console.log('Received message:', message.toString());
+    });
+
+    const topic = 'led_toggle';
+    client.subscribe(topic, (err) => {
+        if (!err) {
+            console.log('Subscribed to topic:', topic);
+        }
+    });
+
+    const publish_led_status = (value) => {
+        client.publish(topic, value, (err) => {
+            if (!err) {
+                console.log('Message published:', value);
+            }
+            setLedStatus(value);
+        });
+    };
+
+
     return (
         <>
             <Box marginLeft={4}>
                 <h1 className="HeaderText">Kitchen</h1>
             </Box>
+
             <Grid container spacing={2}>
-                <Box marginLeft={4} />
+
+                {/* BRIGTHNESS */}
                 <Grid item xs={4}>
                     <Item>
                         <div
@@ -129,6 +177,7 @@ function NodeItem() {
                         <Box marginTop={10} />
                     </Item>
                 </Grid>
+                {/* CURRENT STATUS */}
                 <Grid item xs={4}>
                     <Item>
                         <div style={currentStatusTextStyle}>Current Status</div>
@@ -180,6 +229,54 @@ function NodeItem() {
                                 </div>
                             </Grid>
                         </Grid>
+                    </Item>
+                </Grid>
+
+                {/* MQTT TOGGLE */}
+                <Grid item xs={4}>
+                    <Item>
+                        <Typography
+                            variant="h4"
+                            noWrap
+                            component="div"
+                            sx={{ ...currentStatusTextStyle }}
+                        >
+                            LED TOGGLE (via MQTT)
+                        </Typography>
+
+                        <PopupState variant="popover" popupId="demo-popup-menu">
+                            {(popupState) => (
+                                <React.Fragment>
+                                    <Button variant="contained" {...bindTrigger(popupState)}>
+                                        {ledStatus === 0 && "ON"}
+                                        {ledStatus === 1 && "OFF"}
+                                        {ledStatus === 2 && "AUTO"}
+                                    </Button>
+
+                                    <Menu {...bindMenu(popupState)}>
+                                        <MenuItem onClick={() => {
+                                            publish_led_status(0);
+                                            popupState.close();
+                                        }}>
+                                            On
+                                        </MenuItem>
+                                        <MenuItem onClick={() => {
+                                            publish_led_status(1);
+                                            popupState.close();
+                                        }}>
+                                            Off
+                                        </MenuItem>
+                                        <MenuItem onClick={() => {
+                                            publish_led_status(2);
+                                            popupState.close();
+                                        }}>
+                                            Auto
+                                        </MenuItem>
+                                    </Menu>
+                                </React.Fragment>
+                            )}
+                        </PopupState>
+
                     </Item>
                 </Grid>
             </Grid>
