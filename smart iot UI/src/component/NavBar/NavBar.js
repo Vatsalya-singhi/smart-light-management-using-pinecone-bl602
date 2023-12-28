@@ -18,11 +18,7 @@ import MailIcon from '@mui/icons-material/Mail';
 
 const NavBar = () => {
 
-    const [state, setState] = useState(false);
-
-    const toggleDrawer = (open) => {
-        // setState(!!open);
-    };
+    const [toggleState, setToggleState] = useState(false);
 
     const menuList = [
         {
@@ -47,8 +43,8 @@ const NavBar = () => {
         <Box
             sx={{ width: 250 }}
             role="presentation"
-            onClick={toggleDrawer(false)}
-            onKeyDown={toggleDrawer(false)}
+        // onClick={() => setToggleState(false)}
+        // onKeyDown={() => setToggleState(false)}
         >
             <List>
                 {menuList.map((obj, index) => (
@@ -77,7 +73,7 @@ const NavBar = () => {
                             color="#06E097"
                             aria-label="menu"
                             sx={{ mr: 2 }}
-                            onClick={toggleDrawer(true)}
+                            onClick={() => setToggleState(true)}
                         >
                             <MenuIcon />
                         </IconButton>
@@ -90,10 +86,9 @@ const NavBar = () => {
                 </AppBar>
             </Box>
 
-
             <Drawer
-                open={state}
-                onClose={toggleDrawer(false)}
+                open={toggleState}
+                onClose={() => setToggleState(false)}
             >
                 <SideList />
             </Drawer>

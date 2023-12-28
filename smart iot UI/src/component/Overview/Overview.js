@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Button from "@mui/material/Button";
@@ -117,7 +118,7 @@ const Overview = () => {
                                 <Button
                                     variant="outlined"
                                     className="ViewButton"
-                                    onClick={() => navigate("/room")}
+                                    onClick={() => navigate(`/room?type=${header}&filter=${item}`)}
                                 >
                                     View
                                 </Button>

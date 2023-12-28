@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+/* eslint-disable no-unused-vars */
+import React, { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Switch from "@mui/material/Switch";
 import { styled } from "@mui/material/styles";
@@ -8,13 +9,12 @@ import Grid from "@mui/material/Grid";
 import LightIcon from "@mui/icons-material/Light";
 import TungstenIcon from "@mui/icons-material/Tungsten";
 import Slider from "@mui/material/Slider";
-import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
 
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import mqtt from 'mqtt';
 
@@ -101,8 +101,27 @@ const CustomThumb = () => (
 
 function NodeItem() {
 
+    const navigate = useNavigate();
     const [ledStatus, setLedStatus] = useState(2);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [type, setType] = useState("");
+    const [header, setHeader] = useState("");
+    const [topic, setTopic] = useState("");
 
+    useEffect(() => {
+        const type = searchParams.get('type');
+        const filter = searchParams.get('filter');
+        if (!type || !filter) {
+            navigate('/overview');
+            return;
+        }
+        setType(type);
+        setHeader(`Details for ${filter}`);
+        setTopic(`${type}/${filter}`);
+    }, [searchParams, type, header, topic, navigate]);
+
+
+    // MQTT CODE
     const client = mqtt.connect('mqtt://test.mosquitto.org:1883');
     client.on('connect', () => {
         console.log('Connected to MQTT broker');
@@ -114,7 +133,6 @@ function NodeItem() {
         console.log('Received message:', message.toString());
     });
 
-    const topic = 'led_toggle';
     client.subscribe(topic, (err) => {
         if (!err) {
             console.log('Subscribed to topic:', topic);
@@ -129,12 +147,23 @@ function NodeItem() {
             setLedStatus(value);
         });
     };
+    // MQTT CODE
+
 
 
     return (
         <>
             <Box marginLeft={4}>
-                <h1 className="HeaderText">Kitchen</h1>
+
+                <Typography
+                    variant="h4"
+                    noWrap
+                    component="div"
+                    sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' }, marginLeft: 0, marginTop: 2 }}
+                >
+                    {header}
+                </Typography>
+
             </Box>
 
             <Grid container spacing={2}>

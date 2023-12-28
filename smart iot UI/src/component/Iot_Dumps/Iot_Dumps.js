@@ -2,7 +2,7 @@ import React from "react";
 
 
 
-const IOT_Dumps = () => {
+const IOTDumps = () => {
 
     return (
         <>
@@ -12,4 +12,4 @@ const IOT_Dumps = () => {
 };
 
 
-export default IOT_Dumps;
+export default IOTDumps;
