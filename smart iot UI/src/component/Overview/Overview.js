@@ -8,10 +8,8 @@ import Paper from "@mui/material/Paper";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-
-import laurent from '../../assets/laurent.jpg';
-
 import axios from "axios";
+import laurent from '../../assets/laurent.jpg';
 
 
 const Item = styled(Paper)(({ theme }) => ({

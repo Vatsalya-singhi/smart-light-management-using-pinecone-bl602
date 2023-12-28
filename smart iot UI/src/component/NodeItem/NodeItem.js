@@ -2,17 +2,17 @@
 import React, { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Switch from "@mui/material/Switch";
-import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Grid from "@mui/material/Grid";
-import LightIcon from "@mui/icons-material/Light";
-import TungstenIcon from "@mui/icons-material/Tungsten";
 import Slider from "@mui/material/Slider";
 import Typography from "@mui/material/Typography";
-
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import { styled } from "@mui/material/styles";
+
+import LightIcon from "@mui/icons-material/Light";
+import TungstenIcon from "@mui/icons-material/Tungsten";
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import { useNavigate, useSearchParams } from "react-router-dom";
 
