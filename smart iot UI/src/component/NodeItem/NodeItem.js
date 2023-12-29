@@ -15,7 +15,6 @@ import LightIcon from "@mui/icons-material/Light";
 import TungstenIcon from "@mui/icons-material/Tungsten";
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import { useNavigate, useSearchParams } from "react-router-dom";
-
 import mqtt from 'mqtt';
 
 
@@ -108,6 +107,35 @@ function NodeItem() {
     const [header, setHeader] = useState("");
     const [topic, setTopic] = useState("");
 
+    // MQTT CODE
+    const client = mqtt.connect('mqtt://test.mosquitto.org:1883');
+
+
+    useEffect(() => {
+        // MQTT CODE
+        // Subscribe to topics
+        client.on('connect', () => {
+            console.log('Connected to MQTT broker');
+            client.subscribe(topic, (err) => {
+                if (!err) {
+                    console.log('Subscribed to topic:', topic);
+                }
+            });
+        });
+        // error message
+        client.on('error', (error) => {
+            console.error('MQTT connection error:', error);
+        });
+        // Handle incoming messages
+        client.on('message', (topic, payload) => {
+            console.log(`Received message on topic ${topic}: ${payload.toString()}`);
+        });
+        return () => {
+            // Unsubscribe and disconnect on component unmount
+            client.end();
+        };
+    }, [client, topic]);
+
     useEffect(() => {
         const type = searchParams.get('type');
         const filter = searchParams.get('filter');
@@ -118,28 +146,11 @@ function NodeItem() {
         setType(type);
         setHeader(`Details for ${filter}`);
         setTopic(`${type}/${filter}`);
-    }, [searchParams, type, header, topic, navigate]);
+    }, [navigate, searchParams]);
 
-
-    // MQTT CODE
-    const client = mqtt.connect('mqtt://test.mosquitto.org:1883');
-    client.on('connect', () => {
-        console.log('Connected to MQTT broker');
-    });
-    client.on('error', (error) => {
-        console.error('MQTT connection error:', error);
-    });
-    client.on('message', (topic, message) => {
-        console.log('Received message:', message.toString());
-    });
-
-    client.subscribe(topic, (err) => {
-        if (!err) {
-            console.log('Subscribed to topic:', topic);
-        }
-    });
-
+    // MQTT PUB CODE
     const publish_led_status = (value) => {
+        // Publish the message to the specified topic
         client.publish(topic, value, (err) => {
             if (!err) {
                 console.log('Message published:', value);
@@ -147,7 +158,7 @@ function NodeItem() {
             setLedStatus(value);
         });
     };
-    // MQTT CODE
+    // MQTT PUB CODE
 
 
 
