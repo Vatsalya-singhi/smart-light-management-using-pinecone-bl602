@@ -15,8 +15,9 @@ import LightIcon from "@mui/icons-material/Light";
 import TungstenIcon from "@mui/icons-material/Tungsten";
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import { useNavigate, useSearchParams } from "react-router-dom";
-import mqtt from 'mqtt';
 
+import mqtt from 'mqtt';
+// import mqtt from 'mqtt/dist/mqtt'; //using only 'mqtt' throws some error about polyfills.
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -106,15 +107,30 @@ function NodeItem() {
     const [type, setType] = useState("");
     const [header, setHeader] = useState("");
     const [topic, setTopic] = useState("");
-
+    const [isConnected, setIsConnected] = useState(false);
     // MQTT CODE
-    const client = mqtt.connect('mqtt://test.mosquitto.org:1883');
-
+    // const brokerUrl = 'mqtt://test.mosquitto.org:1883';
+    const brokerUrl = 'ws://test.mosquitto.org:8080';
+    const options = {
+        rejectUnauthorized: false,
+        keepalive: 60,
+        reconnectPeriod: 1000,
+        connectTimeout: 30 * 1000,
+        clean: true,
+        port: 8080,
+        username: '',
+        password: '',
+        // protocolId: 'MQIsdp',
+        // protocolVersion: 3,
+        // path: '/mqtt'
+    };
+    const client = mqtt.connect(brokerUrl, options);
 
     useEffect(() => {
         // MQTT CODE
         // Subscribe to topics
         client.on('connect', () => {
+            setIsConnected(true);
             console.log('Connected to MQTT broker');
             client.subscribe(topic, (err) => {
                 if (!err) {
@@ -126,13 +142,26 @@ function NodeItem() {
         client.on('error', (error) => {
             console.error('MQTT connection error:', error);
         });
+        client.on('reconnect', () => {
+            setIsConnected(true);
+        });
+        client.on('offline', () => {
+            console.log("client goes offline");
+        });
+        // close message
+        client.on('close', () => {
+            console.log('Connection closed');
+        });
         // Handle incoming messages
         client.on('message', (topic, payload) => {
             console.log(`Received message on topic ${topic}: ${payload.toString()}`);
         });
         return () => {
             // Unsubscribe and disconnect on component unmount
-            client.end();
+            client.end(() => {
+                console.log('MQTT Disconnected');
+                setIsConnected(false);
+            });
         };
     }, [client, topic]);
 
