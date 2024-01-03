@@ -15,8 +15,8 @@ import LightIcon from "@mui/icons-material/Light";
 import TungstenIcon from "@mui/icons-material/Tungsten";
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import { useNavigate, useSearchParams } from "react-router-dom";
-import mqtt from 'mqtt';
 
+import MQTT from 'mqtt';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -106,15 +106,37 @@ function NodeItem() {
     const [type, setType] = useState("");
     const [header, setHeader] = useState("");
     const [topic, setTopic] = useState("");
+    const [isConnected, setIsConnected] = useState(false);
 
     // MQTT CODE
-    const client = mqtt.connect('mqtt://test.mosquitto.org:1883');
-
+    // const wsURL = 'mqtt://test.mosquitto.org:1883';
+    // const wsURL = 'ws://test.mosquitto.org:8080';
+    const wsURL = "ws://broker.emqx.io:8083/mqtt";
+    const options = {
+        keepalive: 60,
+        clientId: 'mqttjs_' + Math.random().toString(16).substr(2, 8),
+        protocolId: 'MQTT',
+        protocolVersion: 4,
+        clean: true,
+        reconnectPeriod: 1000,
+        connectTimeout: 30 * 1000,
+        will: {
+            topic: 'WillMsg',
+            payload: 'Connection Closed abnormally..!',
+            qos: 0,
+            retain: false
+        },
+        // rejectUnauthorized: false,
+        // username: 'check_admin',
+        // password: 'check_admin',
+    };
+    const client = MQTT.connect(wsURL, options);
 
     useEffect(() => {
         // MQTT CODE
         // Subscribe to topics
         client.on('connect', () => {
+            setIsConnected(true);
             console.log('Connected to MQTT broker');
             client.subscribe(topic, (err) => {
                 if (!err) {
@@ -126,15 +148,29 @@ function NodeItem() {
         client.on('error', (error) => {
             console.error('MQTT connection error:', error);
         });
+        client.on('reconnect', () => {
+            console.log("reconnecting");
+            setIsConnected(true);
+        });
+        client.on('offline', () => {
+            console.log("client goes offline");
+        });
+        // close message
+        client.on('close', () => {
+            console.log('Connection closed');
+        });
         // Handle incoming messages
         client.on('message', (topic, payload) => {
             console.log(`Received message on topic ${topic}: ${payload.toString()}`);
         });
         return () => {
             // Unsubscribe and disconnect on component unmount
-            client.end();
+            client.end(() => {
+                console.log('MQTT Disconnected');
+                setIsConnected(false);
+            });
         };
-    }, [client, topic]);
+    }, [topic]);
 
     useEffect(() => {
         const type = searchParams.get('type');
@@ -151,7 +187,7 @@ function NodeItem() {
     // MQTT PUB CODE
     const publish_led_status = (value) => {
         // Publish the message to the specified topic
-        client.publish(topic, value, (err) => {
+        client.publish(topic, String(value), (err) => {
             if (!err) {
                 console.log('Message published:', value);
             }
