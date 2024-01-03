@@ -126,9 +126,9 @@ function NodeItem() {
             qos: 0,
             retain: false
         },
-        rejectUnauthorized: false,
-        username: 'check_admin',
-        password: 'check_admin',
+        // rejectUnauthorized: false,
+        // username: 'check_admin',
+        // password: 'check_admin',
     };
     const client = MQTT.connect(wsURL, options);
 
@@ -170,7 +170,7 @@ function NodeItem() {
                 setIsConnected(false);
             });
         };
-    }, [client, topic]);
+    }, [topic]);
 
     useEffect(() => {
         const type = searchParams.get('type');
@@ -187,7 +187,7 @@ function NodeItem() {
     // MQTT PUB CODE
     const publish_led_status = (value) => {
         // Publish the message to the specified topic
-        client.publish(topic, value, (err) => {
+        client.publish(topic, String(value), (err) => {
             if (!err) {
                 console.log('Message published:', value);
             }
