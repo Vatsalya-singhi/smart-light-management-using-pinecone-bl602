@@ -16,8 +16,7 @@ import TungstenIcon from "@mui/icons-material/Tungsten";
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import mqtt from 'mqtt';
-// import mqtt from 'mqtt/dist/mqtt'; //using only 'mqtt' throws some error about polyfills.
+import MQTT from 'mqtt';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -108,23 +107,30 @@ function NodeItem() {
     const [header, setHeader] = useState("");
     const [topic, setTopic] = useState("");
     const [isConnected, setIsConnected] = useState(false);
+
     // MQTT CODE
-    // const brokerUrl = 'mqtt://test.mosquitto.org:1883';
-    const brokerUrl = 'ws://test.mosquitto.org:8080';
+    // const wsURL = 'mqtt://test.mosquitto.org:1883';
+    // const wsURL = 'ws://test.mosquitto.org:8080';
+    const wsURL = "ws://broker.emqx.io:8083/mqtt";
     const options = {
-        rejectUnauthorized: false,
         keepalive: 60,
+        clientId: 'mqttjs_' + Math.random().toString(16).substr(2, 8),
+        protocolId: 'MQTT',
+        protocolVersion: 4,
+        clean: true,
         reconnectPeriod: 1000,
         connectTimeout: 30 * 1000,
-        clean: true,
-        port: 8080,
-        username: '',
-        password: '',
-        // protocolId: 'MQIsdp',
-        // protocolVersion: 3,
-        // path: '/mqtt'
+        will: {
+            topic: 'WillMsg',
+            payload: 'Connection Closed abnormally..!',
+            qos: 0,
+            retain: false
+        },
+        rejectUnauthorized: false,
+        username: 'check_admin',
+        password: 'check_admin',
     };
-    const client = mqtt.connect(brokerUrl, options);
+    const client = MQTT.connect(wsURL, options);
 
     useEffect(() => {
         // MQTT CODE
@@ -143,6 +149,7 @@ function NodeItem() {
             console.error('MQTT connection error:', error);
         });
         client.on('reconnect', () => {
+            console.log("reconnecting");
             setIsConnected(true);
         });
         client.on('offline', () => {
