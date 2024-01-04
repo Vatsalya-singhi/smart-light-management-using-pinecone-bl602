@@ -253,6 +253,7 @@ function NodeItem() {
 
             </Box>
 
+            {/* ROW 1 */}
             <div style={{ width: '100%' }}>
                 <Box
                     sx={{
@@ -466,6 +467,7 @@ function NodeItem() {
                 </Box>
             </div>
 
+            {/* ROW 2 */}
             <div className="App">
                 <div className="dataCard revenueCard">
                     <Line
