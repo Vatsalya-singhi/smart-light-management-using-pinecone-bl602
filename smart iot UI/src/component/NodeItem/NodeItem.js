@@ -72,7 +72,8 @@ const currentStatusTextStyle = {
     letterSpacing: "0.1px",
     color: "var(--black-high-emphasis, rgba(0, 0, 0, 0.87))",
     textAlign: "center",
-    marginLeft: "200px",
+    margin: "auto",
+    width: "100%",
 };
 
 const customSliderStyle = {
@@ -123,6 +124,7 @@ function NodeItem() {
     const [header, setHeader] = useState("");
     const [topic, setTopic] = useState("");
     const [isConnected, setIsConnected] = useState(false);
+    const [liveSensorReading, setLiveSensorReading] = useState({ "brightness": "30", "temperature": "30", "humidity": "30", "pressure": "1.5" });
 
     // MQTT CODE
     // const wsURL = 'mqtt://test.mosquitto.org:1883';
@@ -159,6 +161,12 @@ function NodeItem() {
                     console.log('Subscribed to topic:', topic);
                 }
             });
+
+            client.subscribe("live-readings", (err) => {
+                if (!err) {
+                    console.log('Subscribed to topic: live-readings');
+                }
+            });
         });
         // error message
         client.on('error', (error) => {
@@ -178,6 +186,11 @@ function NodeItem() {
         // Handle incoming messages
         client.on('message', (topic, payload) => {
             console.log(`Received message on topic ${topic}: ${payload.toString()}`);
+
+            if (topic === "live-readings") {
+                console.log("payload=>", JSON.parse(payload.toString()));
+                setLiveSensorReading(JSON.parse(payload.toString()));
+            }
         });
         return () => {
             // Unsubscribe and disconnect on component unmount
@@ -216,36 +229,70 @@ function NodeItem() {
 
     return (
         <>
-            <Box marginLeft={4}>
+            {/* HEADER */}
+            <Box sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                p: 1,
+                m: 1,
+                bgcolor: 'background.paper',
+                borderRadius: 1,
+            }}>
 
                 <Typography
-                    variant="h4"
+                    variant="h5"
                     noWrap
                     component="div"
-                    sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' }, marginLeft: 0, marginTop: 2 }}
+                    sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
                 >
                     {header}
                 </Typography>
 
             </Box>
 
-            <Grid container spacing={2}>
-
-                {/* BRIGTHNESS */}
-                <Grid item xs={4}>
-                    <Item>
+            <div style={{ width: '100%' }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        flexDirection: 'row',
+                        justifyContent: 'space-evenly',
+                        alignItems: 'center',
+                        p: 0.5,
+                        marginBlock: 0.5,
+                        bgcolor: 'background.paper',
+                        borderRadius: 1,
+                    }}
+                >
+                    {/* BRIGTHNESS */}
+                    <Item
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'flex-start',
+                            alignItems: 'center',
+                            p: 1,
+                            m: 1,
+                            minHeight: "200px",
+                            paddingInline: 5,
+                        }}>
                         <div
                             style={{
+                                width: "100%",
                                 display: "flex",
                                 alignItems: "center",
-                                marginBottom: "8px",
+                                justifyContent: 'flex-start',
+                                marginBottom: "40px",
                             }}
                         >
                             <Box marginTop={1} />
                             <LightIconStyled data-testid="Light" />
                             <Switch {...label} defaultChecked />
                         </div>
-                        <Box marginTop={4} />
+
                         <div style={{ ...brightnessTextStyle, alignSelf: "flex-start" }}>
                             Brightness
                         </div>
@@ -260,119 +307,164 @@ function NodeItem() {
                             <TungstenIconStyled data-testid="Tungsten" />
                             <Box sx={{ width: 300 }}>
                                 <Slider
-                                    defaultValue={50}
+                                    key={`slider0-${liveSensorReading['brightness'] || " "}`}
+                                    value={Number(liveSensorReading['brightness']) || 50}
                                     aria-label="Default"
                                     valueLabelDisplay="auto"
+                                    min={0}
+                                    max={100}
                                 />
                             </Box>
                         </div>
-                        <Box marginTop={10} />
                     </Item>
-                </Grid>
-                {/* CURRENT STATUS */}
-                <Grid item xs={4}>
-                    <Item>
-                        <div style={currentStatusTextStyle}>Current Status</div>
-                        <Grid
-                            container
-                            direction="row"
-                            spacing={7}
-                            style={{ height: "246px" }}
-                            marginLeft="10px"
-                            marginBottom="40px"
-                        >
-                            <Grid item style={{ height: "150px" }}>
+
+                    {/* LIVE SENSOR READINGS */}
+                    <Item
+                        sx={{
+                            minHeight: "200px",
+                            paddingInline: 5,
+                        }}>
+                        <div style={currentStatusTextStyle}>Live Sensor Readings</div>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                alignContent: 'space-between',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                p: 1,
+                                m: 1,
+                                bgcolor: 'background.paper',
+                                borderRadius: 1,
+                                marginBottom: "40px",
+                            }}>
+
+                            <Grid item style={{ height: "150px", marginInline: "20px" }}>
                                 <div style={{ height: "150px" }}>
                                     <Slider
+                                        key={`slider1-${liveSensorReading['temperature'] || " "}`}
                                         aria-label="Temperature"
                                         orientation="vertical"
                                         valueLabelDisplay="auto"
-                                        defaultValue={30}
+                                        value={Number(liveSensorReading['temperature']) || 30}
                                         valueLabelFormat={(value) => `Temperature: ${value} °C`}
+                                        min={-50}
+                                        max={50}
                                     />
                                     <p style={{ textAlign: "center" }}>Temperature</p>
                                 </div>
                             </Grid>
-                            <Grid item style={{ height: "150px" }}>
+                            <Grid item style={{ height: "150px", marginInline: "20px" }}>
                                 <div style={{ height: "150px" }}>
                                     <Slider
+                                        key={`slider2-${liveSensorReading['humidity'] || " "}`}
                                         aria-label="Humidity"
                                         orientation="vertical"
-                                        defaultValue={30}
                                         valueLabelDisplay="auto"
+                                        value={Number(liveSensorReading['humidity']) || 30}
                                         valueLabelFormat={(value) => `Humidity ${value} %`}
+                                        min={0}
+                                        max={100}
                                     />
                                     <p style={{ textAlign: "center" }}>Humidity</p>
                                 </div>
                             </Grid>
-                            <Grid item style={{ height: "150px" }}>
+                            <Grid item style={{ height: "150px", marginInline: "20px" }}>
                                 <div style={{ height: "150px" }}>
                                     <Slider
+                                        key={`slider3-${liveSensorReading['pressure'] || " "}`}
                                         getAriaLabel={() => "Pressure (hpa)"}
                                         orientation="vertical"
-                                        defaultValue={1.5}
+                                        valueLabelDisplay="auto"
+                                        value={Number(liveSensorReading['pressure']) || 1.5}
+                                        valueLabelFormat={(value) => `Pressure: ${value}`}
                                         min={0.0}
                                         max={5.0}
                                         step={0.1}
-                                        valueLabelDisplay="auto"
-                                        valueLabelFormat={(value) => `Pressure: ${value}`}
                                     />
                                     <p style={{ textAlign: "center" }}>Pressure (hpa)</p>
                                 </div>
                             </Grid>
-                        </Grid>
+
+                        </Box>
                     </Item>
-                </Grid>
 
-                {/* MQTT TOGGLE */}
-                <Grid item xs={4}>
-                    <Item>
-                        <Typography
-                            variant="h4"
-                            noWrap
-                            component="div"
-                            sx={{ ...currentStatusTextStyle }}
-                        >
-                            LED TOGGLE (via MQTT)
-                        </Typography>
+                    {/* MQTT TOGGLE */}
+                    <Item
+                        sx={{
+                            minHeight: "200px",
+                            paddingInline: 5,
+                        }}>
 
-                        <PopupState variant="popover" popupId="demo-popup-menu">
-                            {(popupState) => (
-                                <React.Fragment>
-                                    <Button variant="contained" {...bindTrigger(popupState)}>
-                                        {ledStatus === 0 && "ON"}
-                                        {ledStatus === 1 && "OFF"}
-                                        {ledStatus === 2 && "AUTO"}
-                                    </Button>
+                        <div style={{ ...currentStatusTextStyle }}>
+                            LED Control System
+                            <small style={{ display: "block", fontWeight: 400 }}>
+                                (using MQTT Protocol)
+                            </small>
+                        </div>
 
-                                    <Menu {...bindMenu(popupState)}>
-                                        <MenuItem onClick={() => {
-                                            publish_led_status(0);
-                                            popupState.close();
-                                        }}>
-                                            On
-                                        </MenuItem>
-                                        <MenuItem onClick={() => {
-                                            publish_led_status(1);
-                                            popupState.close();
-                                        }}>
-                                            Off
-                                        </MenuItem>
-                                        <MenuItem onClick={() => {
-                                            publish_led_status(2);
-                                            popupState.close();
-                                        }}>
-                                            Auto
-                                        </MenuItem>
-                                    </Menu>
-                                </React.Fragment>
-                            )}
-                        </PopupState>
+
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignContent: 'center',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                p: 1,
+                                m: 1,
+                                bgcolor: 'background.paper',
+                                borderRadius: 1,
+                                width: "100%",
+                                height: "100%",
+                                minHeight: "200px",
+                            }}>
+
+                            <PopupState variant="popover" popupId="demo-popup-menu">
+                                {(popupState) => (
+                                    <React.Fragment>
+                                        <Button variant="contained" {...bindTrigger(popupState)}
+                                            color={(ledStatus === 0) ? "success" : (ledStatus === 1 ? "error" : "secondary")}
+                                            sx={{
+                                                height: "100%",
+                                                width: "100%",
+                                            }}
+                                        >
+                                            {ledStatus === 0 && "ON"}
+                                            {ledStatus === 1 && "OFF"}
+                                            {ledStatus === 2 && "AUTO"}
+                                        </Button>
+
+                                        <Menu {...bindMenu(popupState)}>
+                                            <MenuItem onClick={() => {
+                                                publish_led_status(0);
+                                                popupState.close();
+                                            }}>
+                                                On
+                                            </MenuItem>
+                                            <MenuItem onClick={() => {
+                                                publish_led_status(1);
+                                                popupState.close();
+                                            }}>
+                                                Off
+                                            </MenuItem>
+                                            <MenuItem onClick={() => {
+                                                publish_led_status(2);
+                                                popupState.close();
+                                            }}>
+                                                Auto
+                                            </MenuItem>
+                                        </Menu>
+                                    </React.Fragment>
+                                )}
+                            </PopupState>
+
+                        </Box>
 
                     </Item>
-                </Grid>
-            </Grid>
-
+                </Box>
+            </div>
 
             <div className="App">
                 <div className="dataCard revenueCard">
