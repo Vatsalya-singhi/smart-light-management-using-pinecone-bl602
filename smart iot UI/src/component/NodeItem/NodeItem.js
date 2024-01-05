@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
+
 import Button from "@mui/material/Button";
 import Switch from "@mui/material/Switch";
 import Box from "@mui/material/Box";
@@ -13,21 +14,19 @@ import { styled } from "@mui/material/styles";
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import Container from '@mui/material/Container';
-
 import LightIcon from "@mui/icons-material/Light";
 import TungstenIcon from "@mui/icons-material/Tungsten";
+
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import MQTT from 'mqtt';
-
 import { Chart as ChartJS, defaults } from "chart.js/auto";
-import { Bar, Doughnut, Line } from "react-chartjs-2";
-import "./NodeItem.css";
-import revenueData from "../../assets/data/revenueData.json";
-import sourceData from "../../assets/data/sourceData.json";
+import { Line } from "react-chartjs-2";
+
+import MQTT from 'mqtt';
 import axios from "axios";
+
+import "./NodeItem.css";
 
 
 const Item = styled(Paper)(({ theme }) => ({
