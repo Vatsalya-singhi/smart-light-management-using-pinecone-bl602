@@ -10,6 +10,10 @@ import Typography from "@mui/material/Typography";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { styled } from "@mui/material/styles";
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Container from '@mui/material/Container';
 
 import LightIcon from "@mui/icons-material/Light";
 import TungstenIcon from "@mui/icons-material/Tungsten";
@@ -23,10 +27,12 @@ import { Bar, Doughnut, Line } from "react-chartjs-2";
 import "./NodeItem.css";
 import revenueData from "../../assets/data/revenueData.json";
 import sourceData from "../../assets/data/sourceData.json";
+import axios from "axios";
 
 
 const Item = styled(Paper)(({ theme }) => ({
-    backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
+    // backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
+    backgroundColor: "#ddd",
     ...theme.typography.body2,
     padding: theme.spacing(1),
     textAlign: "center",
@@ -121,10 +127,23 @@ function NodeItem() {
     const [ledStatus, setLedStatus] = useState(2);
     const [searchParams, setSearchParams] = useSearchParams();
     const [type, setType] = useState("");
+    const [filter, setFilter] = useState("");
     const [header, setHeader] = useState("");
     const [topic, setTopic] = useState("");
     const [isConnected, setIsConnected] = useState(false);
     const [liveSensorReading, setLiveSensorReading] = useState({ "brightness": "30", "temperature": "30", "humidity": "30", "pressure": "1.5" });
+
+    // chart filters
+    const [field, setField] = useState("");
+    const [timeSelected, setTimeSelected] = useState(10);
+    // chart filters
+
+    // chart data
+    const [labels, setLabels] = useState([]);
+    const [datasets, setDatasets] = useState([]);
+    const [chartTitle, setChartTitle] = useState("Chart Title");
+    // chart data
+
 
     // MQTT CODE
     // const wsURL = 'mqtt://test.mosquitto.org:1883';
@@ -149,7 +168,6 @@ function NodeItem() {
         // password: 'check_admin',
     };
     const client = MQTT.connect(wsURL, options);
-
     useEffect(() => {
         // MQTT CODE
         // Subscribe to topics
@@ -201,18 +219,6 @@ function NodeItem() {
         };
     }, [topic]);
 
-    useEffect(() => {
-        const type = searchParams.get('type');
-        const filter = searchParams.get('filter');
-        if (!type || !filter) {
-            navigate('/overview');
-            return;
-        }
-        setType(type);
-        setHeader(`Details for ${filter}`);
-        setTopic(`${type}/${filter}`);
-    }, [navigate, searchParams]);
-
     // MQTT PUB CODE
     const publish_led_status = (value) => {
         // Publish the message to the specified topic
@@ -224,23 +230,141 @@ function NodeItem() {
         });
     };
     // MQTT PUB CODE
+    // MQTT CODE
 
 
+    const fetchColorCode = (value) => {
+        switch (value) {
+            // TEMPERATURE
+            case "temperature":
+                return "#892d2d";
+            case "average_temperature":
+                return "#342674";
+            case "min_temperature":
+                return "#3a155a";
+            case "max_temperature":
+                return "#695353";
+            //  PROXIMITY
+            case "proximity":
+                return "#13a1ba";
+            case "average_proximity":
+                return "#09515e";
+            case "min_proximity":
+                return "#067e94";
+            case "max_proximity":
+                return "#167484";
+            // LUMINOSITY
+            case "luminosity":
+                return "#ba131b";
+            case "average_luminosity":
+                return "#5d090d";
+            case "min_luminosity":
+                return "#3e0608";
+            case "max_luminosity":
+                return "#1f0304";
+            // LDR
+            case "ldr":
+                return "#0e8c86";
+            case "average_ldr":
+                return "#0a6c68";
+            case "min_ldr":
+                return "#074d4a";
+            case "max_ldr":
+                return "#042e2c";
+            // COUNT
+            case "count":
+                return "#4e5e09";
+            // LED STATUS
+            case "current_led_status":
+                return "#4d4d4d";
+            default:
+                return "#000000";
+        }
+    }
+
+    const fetch_data = async () => {
+        try {
+            const aggregateBy = (type === "place") ? "aggregate_by_place" : "aggregate_by_sensor";
+            if (!field || !aggregateBy || !filter || !timeSelected) {
+                return;
+            }
+            const response = await axios.get(`http://localhost:3000/${field}/${aggregateBy}?device_name=${filter}&minutes=${timeSelected}`);
+            const data = response.data[0].data;
+            const labels = data.map((obj) => obj.date);
+            let dataset = [];
+            const dataLabelList = Object.keys(data[0]).filter(x => x !== "date");
+            dataLabelList.forEach((lb) => {
+                dataset.push({
+                    label: String(lb),
+                    data: data.map((obj) => obj[lb]),
+                    backgroundColor: fetchColorCode(lb),
+                    borderColor: fetchColorCode(lb),
+                })
+            });
+            setLabels(labels.reverse()); // reverse is to make data chronological
+            setDatasets(dataset.reverse()); // reverse is to make data chronological
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+
+    // CHART CODE
+    useEffect(() => {
+        fetch_data();
+        if (field === "iot_dumps") {
+            setChartTitle("Cummulative readings");
+        }
+        if (field === "temperature") {
+            setChartTitle("Temperature sensor reading");
+        }
+        if (field === "proximity") {
+            setChartTitle("Proximity sensor reading");
+        }
+        if (field === "luminosity") {
+            setChartTitle("Luminosity sensor reading");
+        }
+        if (field === "ldr") {
+            setChartTitle("LDR sensor reading");
+        }
+    }, [field, timeSelected]);
+    // CHART CODE
+
+    // QUERY PARAMS CODE
+    useEffect(() => {
+        const type = searchParams.get('type');
+        const filter = searchParams.get('filter');
+        if (!type || !filter) {
+            navigate('/overview');
+            return;
+        }
+        setType(type);
+        setFilter(filter);
+        setHeader(`Details for ${filter}`);
+        setTopic(`${type}/${filter}`);
+    }, [navigate, searchParams]);
+    // QUERY PARAMS CODE
+
+    // ON INIT
+    useEffect(() => {
+        setField("iot_dumps");
+        setTimeSelected(10);
+    }, []);
+    // ON INIT
 
     return (
-        <>
+        <div className="bg">
             {/* HEADER */}
-            <Box sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                flexDirection: 'row',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                p: 1,
-                m: 1,
-                bgcolor: 'background.paper',
-                borderRadius: 1,
-            }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    paddingInline: 1,
+                    paddingTop: 1,
+                }}>
 
                 <Typography
                     variant="h5"
@@ -254,240 +378,292 @@ function NodeItem() {
             </Box>
 
             {/* ROW 1 */}
-            <div style={{ width: '100%' }}>
-                <Box
+            <Box
+                variant="div"
+                style={{
+                    width: "100%",
+                    gap: "10%",
+                    marginInline: "auto",
+                }}
+                sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 0.5,
+                    borderRadius: 1,
+                }}
+            >
+                {/* BRIGTHNESS */}
+                <Item
                     sx={{
+                        backgroundColor: "#fff",
                         display: 'flex',
-                        flexWrap: 'wrap',
-                        flexDirection: 'row',
-                        justifyContent: 'space-evenly',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-start',
                         alignItems: 'center',
-                        p: 0.5,
-                        marginBlock: 0.5,
-                        bgcolor: 'background.paper',
-                        borderRadius: 1,
-                    }}
-                >
-                    {/* BRIGTHNESS */}
-                    <Item
+                        p: 1,
+                        m: 1,
+                        minHeight: "200px",
+                        paddingInline: 5,
+                    }}>
+                    <div
+                        style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: 'flex-start',
+                            marginBottom: "40px",
+                        }}
+                    >
+                        <Box marginTop={1} />
+                        <LightIconStyled data-testid="Light" />
+                        <Switch {...label} defaultChecked />
+                    </div>
+
+                    <div style={{ ...brightnessTextStyle, alignSelf: "flex-start" }}>
+                        Brightness
+                    </div>
+                    <Box marginTop={1} />
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            marginBottom: "8px",
+                        }}
+                    >
+                        <TungstenIconStyled data-testid="Tungsten" />
+                        <Box sx={{ width: 300 }}>
+                            <Slider
+                                key={`slider0-${liveSensorReading['brightness'] || " "}`}
+                                value={Number(liveSensorReading['brightness']) || 50}
+                                aria-label="Default"
+                                valueLabelDisplay="auto"
+                                min={0}
+                                max={100}
+                            />
+                        </Box>
+                    </div>
+                </Item>
+
+                {/* LIVE SENSOR READINGS */}
+                <Item
+                    sx={{
+                        minHeight: "200px",
+                        paddingInline: 5,
+                        backgroundColor: "#fff",
+                    }}>
+                    <div style={currentStatusTextStyle}>Live Sensor Readings</div>
+                    <Box
                         sx={{
                             display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'flex-start',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignContent: 'space-between',
                             alignItems: 'center',
+                            flexWrap: 'wrap',
                             p: 1,
                             m: 1,
-                            minHeight: "200px",
-                            paddingInline: 5,
+                            bgcolor: 'background.paper',
+                            borderRadius: 1,
+                            marginBottom: "40px",
                         }}>
-                        <div
-                            style={{
-                                width: "100%",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: 'flex-start',
-                                marginBottom: "40px",
-                            }}
-                        >
-                            <Box marginTop={1} />
-                            <LightIconStyled data-testid="Light" />
-                            <Switch {...label} defaultChecked />
-                        </div>
 
-                        <div style={{ ...brightnessTextStyle, alignSelf: "flex-start" }}>
-                            Brightness
-                        </div>
-                        <Box marginTop={1} />
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                marginBottom: "8px",
-                            }}
-                        >
-                            <TungstenIconStyled data-testid="Tungsten" />
-                            <Box sx={{ width: 300 }}>
+                        <Grid item style={{ height: "150px", marginInline: "20px" }}>
+                            <div style={{ height: "150px" }}>
                                 <Slider
-                                    key={`slider0-${liveSensorReading['brightness'] || " "}`}
-                                    value={Number(liveSensorReading['brightness']) || 50}
-                                    aria-label="Default"
+                                    key={`slider1-${liveSensorReading['temperature'] || " "}`}
+                                    aria-label="Temperature"
+                                    orientation="vertical"
                                     valueLabelDisplay="auto"
+                                    value={Number(liveSensorReading['temperature']) || 30}
+                                    valueLabelFormat={(value) => `Temperature: ${value} °C`}
+                                    min={-50}
+                                    max={50}
+                                />
+                                <p style={{ textAlign: "center" }}>Temperature</p>
+                            </div>
+                        </Grid>
+                        <Grid item style={{ height: "150px", marginInline: "20px" }}>
+                            <div style={{ height: "150px" }}>
+                                <Slider
+                                    key={`slider2-${liveSensorReading['humidity'] || " "}`}
+                                    aria-label="Humidity"
+                                    orientation="vertical"
+                                    valueLabelDisplay="auto"
+                                    value={Number(liveSensorReading['humidity']) || 30}
+                                    valueLabelFormat={(value) => `Humidity ${value} %`}
                                     min={0}
                                     max={100}
                                 />
-                            </Box>
-                        </div>
-                    </Item>
+                                <p style={{ textAlign: "center" }}>Humidity</p>
+                            </div>
+                        </Grid>
+                        <Grid item style={{ height: "150px", marginInline: "20px" }}>
+                            <div style={{ height: "150px" }}>
+                                <Slider
+                                    key={`slider3-${liveSensorReading['pressure'] || " "}`}
+                                    getAriaLabel={() => "Pressure (hpa)"}
+                                    orientation="vertical"
+                                    valueLabelDisplay="auto"
+                                    value={Number(liveSensorReading['pressure']) || 1.5}
+                                    valueLabelFormat={(value) => `Pressure: ${value}`}
+                                    min={0.0}
+                                    max={5.0}
+                                    step={0.1}
+                                />
+                                <p style={{ textAlign: "center" }}>Pressure (hpa)</p>
+                            </div>
+                        </Grid>
 
-                    {/* LIVE SENSOR READINGS */}
-                    <Item
+                    </Box>
+                </Item>
+
+                {/* MQTT TOGGLE */}
+                <Item
+                    sx={{
+                        minHeight: "200px",
+                        paddingInline: 5,
+                        backgroundColor: "#fff",
+                    }}>
+
+                    <div style={{ ...currentStatusTextStyle }}>
+                        LED Control System
+                        <small style={{ display: "block", fontWeight: 400 }}>
+                            (using MQTT Protocol)
+                        </small>
+                    </div>
+
+
+                    <Box
                         sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignContent: 'center',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            p: 1,
+                            m: 1,
+                            bgcolor: 'background.paper',
+                            borderRadius: 1,
+                            width: "100%",
+                            height: "100%",
                             minHeight: "200px",
-                            paddingInline: 5,
-                        }}>
-                        <div style={currentStatusTextStyle}>Live Sensor Readings</div>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                justifyContent: 'space-between',
-                                alignContent: 'space-between',
-                                alignItems: 'center',
-                                flexWrap: 'wrap',
-                                p: 1,
-                                m: 1,
-                                bgcolor: 'background.paper',
-                                borderRadius: 1,
-                                marginBottom: "40px",
-                            }}>
-
-                            <Grid item style={{ height: "150px", marginInline: "20px" }}>
-                                <div style={{ height: "150px" }}>
-                                    <Slider
-                                        key={`slider1-${liveSensorReading['temperature'] || " "}`}
-                                        aria-label="Temperature"
-                                        orientation="vertical"
-                                        valueLabelDisplay="auto"
-                                        value={Number(liveSensorReading['temperature']) || 30}
-                                        valueLabelFormat={(value) => `Temperature: ${value} °C`}
-                                        min={-50}
-                                        max={50}
-                                    />
-                                    <p style={{ textAlign: "center" }}>Temperature</p>
-                                </div>
-                            </Grid>
-                            <Grid item style={{ height: "150px", marginInline: "20px" }}>
-                                <div style={{ height: "150px" }}>
-                                    <Slider
-                                        key={`slider2-${liveSensorReading['humidity'] || " "}`}
-                                        aria-label="Humidity"
-                                        orientation="vertical"
-                                        valueLabelDisplay="auto"
-                                        value={Number(liveSensorReading['humidity']) || 30}
-                                        valueLabelFormat={(value) => `Humidity ${value} %`}
-                                        min={0}
-                                        max={100}
-                                    />
-                                    <p style={{ textAlign: "center" }}>Humidity</p>
-                                </div>
-                            </Grid>
-                            <Grid item style={{ height: "150px", marginInline: "20px" }}>
-                                <div style={{ height: "150px" }}>
-                                    <Slider
-                                        key={`slider3-${liveSensorReading['pressure'] || " "}`}
-                                        getAriaLabel={() => "Pressure (hpa)"}
-                                        orientation="vertical"
-                                        valueLabelDisplay="auto"
-                                        value={Number(liveSensorReading['pressure']) || 1.5}
-                                        valueLabelFormat={(value) => `Pressure: ${value}`}
-                                        min={0.0}
-                                        max={5.0}
-                                        step={0.1}
-                                    />
-                                    <p style={{ textAlign: "center" }}>Pressure (hpa)</p>
-                                </div>
-                            </Grid>
-
-                        </Box>
-                    </Item>
-
-                    {/* MQTT TOGGLE */}
-                    <Item
-                        sx={{
-                            minHeight: "200px",
-                            paddingInline: 5,
                         }}>
 
-                        <div style={{ ...currentStatusTextStyle }}>
-                            LED Control System
-                            <small style={{ display: "block", fontWeight: 400 }}>
-                                (using MQTT Protocol)
-                            </small>
-                        </div>
+                        <PopupState variant="popover" popupId="demo-popup-menu">
+                            {(popupState) => (
+                                <React.Fragment>
+                                    <Button variant="contained" {...bindTrigger(popupState)}
+                                        color={(ledStatus === 0) ? "success" : (ledStatus === 1 ? "error" : "secondary")}
+                                        sx={{
+                                            height: "100%",
+                                            width: "100%",
+                                        }}
+                                    >
+                                        {ledStatus === 0 && "ON"}
+                                        {ledStatus === 1 && "OFF"}
+                                        {ledStatus === 2 && "AUTO"}
+                                    </Button>
 
+                                    <Menu {...bindMenu(popupState)}>
+                                        <MenuItem onClick={() => {
+                                            publish_led_status(0);
+                                            popupState.close();
+                                        }}>
+                                            On
+                                        </MenuItem>
+                                        <MenuItem onClick={() => {
+                                            publish_led_status(1);
+                                            popupState.close();
+                                        }}>
+                                            Off
+                                        </MenuItem>
+                                        <MenuItem onClick={() => {
+                                            publish_led_status(2);
+                                            popupState.close();
+                                        }}>
+                                            Auto
+                                        </MenuItem>
+                                    </Menu>
+                                </React.Fragment>
+                            )}
+                        </PopupState>
 
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignContent: 'center',
-                                alignItems: 'center',
-                                flexWrap: 'wrap',
-                                p: 1,
-                                m: 1,
-                                bgcolor: 'background.paper',
-                                borderRadius: 1,
-                                width: "100%",
-                                height: "100%",
-                                minHeight: "200px",
-                            }}>
+                    </Box>
 
-                            <PopupState variant="popover" popupId="demo-popup-menu">
-                                {(popupState) => (
-                                    <React.Fragment>
-                                        <Button variant="contained" {...bindTrigger(popupState)}
-                                            color={(ledStatus === 0) ? "success" : (ledStatus === 1 ? "error" : "secondary")}
-                                            sx={{
-                                                height: "100%",
-                                                width: "100%",
-                                            }}
-                                        >
-                                            {ledStatus === 0 && "ON"}
-                                            {ledStatus === 1 && "OFF"}
-                                            {ledStatus === 2 && "AUTO"}
-                                        </Button>
-
-                                        <Menu {...bindMenu(popupState)}>
-                                            <MenuItem onClick={() => {
-                                                publish_led_status(0);
-                                                popupState.close();
-                                            }}>
-                                                On
-                                            </MenuItem>
-                                            <MenuItem onClick={() => {
-                                                publish_led_status(1);
-                                                popupState.close();
-                                            }}>
-                                                Off
-                                            </MenuItem>
-                                            <MenuItem onClick={() => {
-                                                publish_led_status(2);
-                                                popupState.close();
-                                            }}>
-                                                Auto
-                                            </MenuItem>
-                                        </Menu>
-                                    </React.Fragment>
-                                )}
-                            </PopupState>
-
-                        </Box>
-
-                    </Item>
-                </Box>
-            </div>
+                </Item>
+            </Box>
 
             {/* ROW 2 */}
-            <div className="App">
+            <Box>
+
+                {/* DROPDOWN */}
+                <div
+                    style={{
+                        width: "100%",
+                        paddingInline: 1,
+                        display: "flex",
+                        justifyContent: "end",
+                        alignItems: "center",
+                        marginBlock: "1rem",
+                        paddingRight: "2vw",
+                        gap: "1vw",
+                    }}>
+                    {/* FIELD */}
+                    <Box sx={{ width: "120px" }}>
+                        <FormControl fullWidth>
+                            <InputLabel id="demo-simple-select-label">Attribute</InputLabel>
+                            <Select
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={field}
+                                label="Attribute"
+                                onChange={(event) => {
+                                    setField(event.target.value);
+                                }}
+                            >
+                                <MenuItem value={"iot_dumps"}>Show All</MenuItem>
+                                <MenuItem value={"temperature"}>Temperature</MenuItem>
+                                <MenuItem value={"proximity"}>Proximity</MenuItem>
+                                <MenuItem value={"luminosity"}>Luminosity</MenuItem>
+                                <MenuItem value={"ldr"}>LDR</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                    {/* TIME SELECTED */}
+                    <Box sx={{ width: "120px" }}>
+                        <FormControl fullWidth>
+                            <InputLabel id="demo-simple-select-label">Time Range</InputLabel>
+                            <Select
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={timeSelected}
+                                label="Time Range"
+                                onChange={(event) => {
+                                    setTimeSelected(event.target.value);
+                                }}
+                            >
+                                <MenuItem value={1}>1 minutes</MenuItem>
+                                <MenuItem value={3}>3 minutes</MenuItem>
+                                <MenuItem value={5}>5 minutes</MenuItem>
+                                <MenuItem value={10}>10 minutes</MenuItem>
+                                <MenuItem value={15}>15 minutes</MenuItem>
+                                <MenuItem value={20}>20 minutes</MenuItem>
+                                <MenuItem value={25}>25 minutes</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </div>
+
+                {/* CHART */}
                 <div className="dataCard revenueCard">
                     <Line
                         data={{
-                            labels: revenueData.map((data) => data.label),
-                            datasets: [
-                                {
-                                    label: "Revenue",
-                                    data: revenueData.map((data) => data.revenue),
-                                    backgroundColor: "#064FF0",
-                                    borderColor: "#064FF0",
-                                },
-                                {
-                                    label: "Cost",
-                                    data: revenueData.map((data) => data.cost),
-                                    backgroundColor: "#FF3030",
-                                    borderColor: "#FF3030",
-                                },
-                            ],
+                            labels: labels,
+                            datasets: datasets,
                         }}
+
                         options={{
                             elements: {
                                 line: {
@@ -496,73 +672,16 @@ function NodeItem() {
                             },
                             plugins: {
                                 title: {
-                                    text: "Monthly Revenue & Cost",
+                                    text: chartTitle,
                                 },
                             },
                         }}
                     />
                 </div>
 
-                <div className="dataCard customerCard">
-                    <Bar
-                        data={{
-                            labels: sourceData.map((data) => data.label),
-                            datasets: [
-                                {
-                                    label: "Count",
-                                    data: sourceData.map((data) => data.value),
-                                    backgroundColor: [
-                                        "rgba(43, 63, 229, 0.8)",
-                                        "rgba(250, 192, 19, 0.8)",
-                                        "rgba(253, 135, 135, 0.8)",
-                                    ],
-                                    borderRadius: 5,
-                                },
-                            ],
-                        }}
-                        options={{
-                            plugins: {
-                                title: {
-                                    text: "Revenue Source",
-                                },
-                            },
-                        }}
-                    />
-                </div>
+            </Box>
 
-                <div className="dataCard categoryCard">
-                    <Doughnut
-                        data={{
-                            labels: sourceData.map((data) => data.label),
-                            datasets: [
-                                {
-                                    label: "Count",
-                                    data: sourceData.map((data) => data.value),
-                                    backgroundColor: [
-                                        "rgba(43, 63, 229, 0.8)",
-                                        "rgba(250, 192, 19, 0.8)",
-                                        "rgba(253, 135, 135, 0.8)",
-                                    ],
-                                    borderColor: [
-                                        "rgba(43, 63, 229, 0.8)",
-                                        "rgba(250, 192, 19, 0.8)",
-                                        "rgba(253, 135, 135, 0.8)",
-                                    ],
-                                },
-                            ],
-                        }}
-                        options={{
-                            plugins: {
-                                title: {
-                                    text: "Revenue Sources",
-                                },
-                            },
-                        }}
-                    />
-                </div>
-            </div>
-
-        </>
+        </div>
     );
 }
 
